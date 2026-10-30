@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Vokabel-Arena</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* Jugend-Design: dunkles Indigo, knallige Akzente, dicke "3D"-Buttons */
+:root{
+  --bg:#17113a; --bg2:#241a5e; --card:#2d2275; --card2:#3a2c94; --ink:#ffffff; --muted:#bdb4ee; --line:#4a3da8;
+  --pink:#ff4d8d; --yellow:#ffd23f; --mint:#2ee6a6; --blue:#4cc9f0; --red:#ff6b6b;
+  --accent:var(--pink); --accent-ink:#fff; --ok:var(--mint); --no:var(--red);
+  --font:"Fredoka","Nunito","Trebuchet MS",system-ui,-apple-system,"Segoe UI",sans-serif;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;color:var(--ink);font-family:var(--font);color-scheme:dark}
+body{min-height:100dvh;display:flex;flex-direction:column;align-items:center;padding:env(safe-area-inset-top) 14px env(safe-area-inset-bottom);
+  background:radial-gradient(circle at 15% 0%,#3b2a9e 0,transparent 45%),radial-gradient(circle at 90% 30%,#7a1f7a55 0,transparent 40%),var(--bg);background-attachment:fixed}
+.wrap{width:100%;max-width:580px;display:flex;flex-direction:column;gap:14px;padding:14px 0 28px}
+header{display:flex;align-items:center;justify-content:space-between;gap:8px}
+h1{font-size:1.5rem;margin:0;font-weight:700;letter-spacing:.01em;line-height:1.05}
+h1 span{background:linear-gradient(90deg,var(--yellow),var(--pink));-webkit-background-clip:text;background-clip:text;color:transparent}
+h1 small{display:block;font-weight:500;color:var(--muted);font-size:.8rem;margin-top:3px;-webkit-text-fill-color:var(--muted)}
+.hud{display:flex;gap:6px;align-items:center}
+.pill{background:var(--bg2);border:2px solid var(--line);border-radius:999px;padding:5px 10px;font-weight:600;font-size:.82rem;white-space:nowrap}
+.pill.fire{border-color:#ff9f43}.pill.xp{border-color:var(--yellow)}
+.tabs{display:flex;background:var(--bg2);border-radius:18px;padding:4px;gap:4px;border:2px solid var(--line)}
+.tabs button{flex:1;border:0;background:transparent;color:var(--muted);padding:10px 2px;border-radius:14px;font:600 .88rem var(--font);cursor:pointer;transition:transform .1s}
+.tabs button:active{transform:scale(.95)}
+.tabs button.on{background:linear-gradient(135deg,var(--pink),#ff7a59);color:#fff;box-shadow:0 3px 0 #b02b5c}
+.panel{background:var(--bg2);border:2px solid var(--line);border-radius:20px;padding:14px}
+.lbl{font-size:.72rem;text-transform:uppercase;letter-spacing:.12em;color:var(--yellow);margin:2px 2px 7px;font-weight:600}
+.lbl:not(:first-child){margin-top:12px}
+.row{display:flex;flex-wrap:wrap;gap:7px}
+.chip{border:2px solid var(--line);background:var(--card);color:var(--ink);border-radius:999px;padding:6px 12px;font:500 .82rem var(--font);cursor:pointer;transition:transform .1s}
+.chip:active{transform:scale(.94)}
+.chip.on{background:var(--blue);color:#06233a;border-color:var(--blue);font-weight:600;box-shadow:0 3px 0 #2a8fb3}
+.chip.h.on{background:var(--yellow);color:#3a2a00;border-color:var(--yellow);box-shadow:0 3px 0 #b38f10}
+.opts{display:flex;gap:8px;flex-wrap:wrap;align-items:center;justify-content:space-between;margin-top:14px;font-size:.85rem;color:var(--muted)}
+.opts label{display:flex;align-items:center;gap:6px;cursor:pointer}
+.opts input[type=checkbox]{accent-color:var(--pink);width:18px;height:18px}
+.btn{border:2px solid var(--line);background:var(--card);color:var(--ink);padding:9px 14px;border-radius:14px;cursor:pointer;font:600 .88rem var(--font);box-shadow:0 3px 0 #1a1250;transition:transform .08s,box-shadow .08s}
+.btn:active{transform:translateY(3px);box-shadow:none}
+.btn.primary{background:var(--pink);border-color:var(--pink);box-shadow:0 3px 0 #b02b5c;color:#fff}
+.btn.danger{color:var(--red)}
+.progress{height:14px;background:var(--bg2);border:2px solid var(--line);border-radius:999px;overflow:hidden}
+.progress i{display:block;height:100%;background:repeating-linear-gradient(45deg,var(--mint) 0 10px,#22c995 10px 20px);width:0;transition:width .3s;border-radius:999px}
+.meta{display:flex;justify-content:space-between;font-size:.85rem;color:var(--muted);font-weight:500}
+.scene{perspective:1200px;height:min(56vh,370px);min-height:280px;cursor:pointer}
+.card{position:relative;width:100%;height:100%;transition:transform .5s cubic-bezier(.3,1.4,.5,1);transform-style:preserve-3d}
+.card.flip{transform:rotateY(180deg)}
+.face{position:absolute;inset:0;backface-visibility:hidden;-webkit-backface-visibility:hidden;border-radius:28px;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:36px 22px 52px;text-align:center;gap:10px;overflow:auto;border:3px solid #fff3;box-shadow:0 8px 0 #0d0828,0 18px 36px #0006}
+.face.front{background:linear-gradient(145deg,#6a3df0,#c13cc4 70%,#ff4d8d)}
+.face.back{transform:rotateY(180deg);background:linear-gradient(145deg,#0ea5c6,#2ee6a6)}
+.face.back .word,.face.back .ipa,.face.back .ex{color:#04283a}
+.face.back .ipa,.face.back .ex{opacity:.8}
+.tag{position:absolute;top:13px;left:16px;right:96px;text-align:left;font-size:.7rem;text-transform:uppercase;letter-spacing:.1em;color:#fffc;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:600}
+.face.back .tag{color:#04283acc}
+.state{position:absolute;top:10px;right:14px;font-size:.74rem;font-weight:700;background:#0004;border-radius:999px;padding:3px 9px}
+.state:empty{display:none}
+.state.k{color:var(--mint)} .state.u{color:#ffb0b0}
+.word{font-size:clamp(1.8rem,8vw,2.6rem);font-weight:700;line-height:1.1;overflow-wrap:anywhere;text-shadow:0 2px 0 #0003}
+.face.back .word{text-shadow:none}
+.ipa{font-size:1.05rem;color:#ffffffcc;font-weight:500}
+.ex{font-size:1rem;color:#fffe;max-width:92%;font-weight:500}
+.hint{font-size:.8rem;color:#fffb;position:absolute;bottom:14px;left:0;right:0;text-align:center}
+.speak{position:absolute;bottom:10px;right:12px;border:0;background:var(--yellow);color:#3a2a00;width:44px;height:44px;border-radius:50%;font-size:1.2rem;cursor:pointer;box-shadow:0 3px 0 #b38f10}
+.speak:active{transform:translateY(3px);box-shadow:none}
+.alink{font-size:.82rem;color:#04283a;text-decoration:none;background:#ffffffaa;border-radius:999px;padding:5px 12px;font-weight:600}
+.actions{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:16px}
+.actions button{padding:15px;border-radius:18px;border:0;font:700 1.08rem var(--font);cursor:pointer;color:#fff;transition:transform .08s,box-shadow .08s}
+.actions .no{background:var(--red);box-shadow:0 5px 0 #b13a3a}
+.actions .ok{background:#17c58b;box-shadow:0 5px 0 #0c8a60}
+.actions button:active{transform:translateY(5px);box-shadow:none}
+.nav{display:flex;justify-content:space-between;gap:8px;margin-top:12px}
+.qbox{display:flex;flex-direction:column;gap:14px;padding:26px 18px;background:linear-gradient(145deg,#6a3df0,#c13cc4);border-radius:28px;border:3px solid #fff3;box-shadow:0 8px 0 #0d0828,0 18px 36px #0006;text-align:center}
+.qbox .tag{position:static;text-align:center;right:auto}
+.qbox .ex{margin:0 auto}
+.qbox input{font:600 1.2rem var(--font);padding:14px;border-radius:16px;border:3px solid #fff5;background:#150f3a;color:#fff;text-align:center;width:100%}
+.qbox input::placeholder{color:#fff7}
+.qbox input:focus{outline:none;border-color:var(--yellow)}
+.qbox input.good{border-color:var(--mint)} .qbox input.bad{border-color:var(--red)}
+.fb{min-height:3.2em;font-size:1rem;font-weight:600}
+.fb.good{color:var(--mint)} .fb.bad{color:#ffd0d0}
+.search{width:100%;padding:12px 14px;border-radius:16px;border:2px solid var(--line);background:var(--bg2);color:#fff;font:1rem var(--font)}
+.search:focus{outline:none;border-color:var(--yellow)}
+.list{display:flex;flex-direction:column;gap:2px}
+.list .sec{font-size:.74rem;text-transform:uppercase;letter-spacing:.12em;color:var(--yellow);margin:16px 2px 6px;font-weight:600}
+.item{display:grid;grid-template-columns:1fr 1fr 14px;gap:10px;padding:11px 12px;background:var(--bg2);border:2px solid var(--line);border-radius:16px;font-size:.95rem;align-items:start;cursor:pointer;margin-bottom:6px}
+.item:active{transform:scale(.99)}
+.item b{font-weight:600}.item small{display:block;color:var(--muted);font-size:.78rem;margin-top:1px}
+.dot{width:12px;height:12px;border-radius:50%;margin-top:5px;background:var(--line)}
+.dot.k{background:var(--mint)} .dot.u{background:var(--red)}
+.done{text-align:center;padding:34px 12px;background:var(--bg2);border:2px solid var(--line);border-radius:24px}
+.done h2{margin:0 0 6px;font-size:1.7rem}
+.done .big{font-size:3rem}
+.hidden{display:none!important}
+.kbd{font-size:.74rem;color:var(--muted);text-align:center;margin:8px 0 0}
+textarea{width:100%;min-height:150px;padding:12px;border-radius:16px;border:2px solid var(--line);background:#150f3a;color:#fff;font:.82rem ui-monospace,Menlo,Consolas,monospace;resize:vertical}
+.fields{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:8px 0}
+.fields input{padding:10px 12px;border-radius:12px;border:2px solid var(--line);background:#150f3a;color:#fff;font:.9rem var(--font);width:100%}
+pre.fmt{background:#150f3a;border:2px solid var(--line);border-radius:14px;padding:10px;font:.74rem ui-monospace,Menlo,Consolas,monospace;overflow:auto;white-space:pre;margin:6px 0;color:var(--mint)}
+.msg{font-size:.88rem;margin-top:8px;min-height:1.2em;font-weight:500}
+.msg.ok{color:var(--mint)} .msg.err{color:#ffb0b0}
+p.small{font-size:.85rem;color:var(--muted);margin:4px 0;line-height:1.4}
+p.small b{color:#fff}
+.pop{position:fixed;left:50%;top:18%;transform:translateX(-50%);font-weight:700;font-size:1.6rem;color:var(--yellow);text-shadow:0 3px 0 #0008;pointer-events:none;animation:pop .9s ease-out forwards;z-index:20}
+@keyframes pop{0%{opacity:0;transform:translate(-50%,20px) scale(.6)}25%{opacity:1;transform:translate(-50%,0) scale(1.15)}100%{opacity:0;transform:translate(-50%,-60px) scale(1)}}
+.conf{position:fixed;top:-20px;font-size:1.6rem;pointer-events:none;animation:fall linear forwards;z-index:19}
+@keyframes fall{to{transform:translateY(110vh) rotate(540deg);opacity:.9}}
+@media (prefers-reduced-motion:reduce){.pop,.conf{display:none}.card{transition:none}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1><span>Vokabel-Arena</span><small id="stats"></small></h1>
+    <div class="hud"><span class="pill fire" id="streak" title="Lern-Streak">🔥 0</span><span class="pill xp" id="xp" title="Punkte">⭐ 0</span><button class="btn" id="resetBtn" title="Lernstand zurücksetzen">↺</button></div>
+  </header>
+
+  <div class="tabs">
+    <button data-tab="cards" class="on">🃏 Karten</button>
+    <button data-tab="quiz">⌨️ Tippen</button>
+    <button data-tab="list">📋 Liste</button>
+    <button data-tab="imp">📥 Import</button>
+  </div>
+
+  <div class="panel" id="filters">
+    <div class="lbl">📚 Unit</div><div class="row" id="unitChips"></div>
+    <div class="lbl">🏷️ Überschrift</div><div class="row" id="headChips"></div>
+    <div class="opts">
+      <button class="btn" id="dirBtn">EN → DE</button>
+      <label><input type="checkbox" id="onlyUnknown"> nur nicht gewusste</label>
+      <label><input type="checkbox" id="shuffle" checked> mischen</label>
+    </div>
+  </div>
+
+  <section id="tab-cards" style="display:flex;flex-direction:column;gap:14px">
+    <div class="meta"><span id="pos"></span><span></span></div>
+    <div class="progress"><i id="bar"></i></div>
+    <div id="cardArea">
+      <div class="scene" id="scene">
+        <div class="card" id="card">
+          <div class="face front"><span class="tag" id="fTag"></span><span class="state" id="fState"></span>
+            <div class="word" id="fWord"></div><div class="ipa" id="fIpa"></div>
+            <button class="speak" id="fSpeak" title="Vorlesen">🔊</button>
+            <span class="hint">👆 Tippen zum Umdrehen</span></div>
+          <div class="face back"><span class="tag" id="bTag"></span>
+            <div class="word" id="bWord"></div><div class="ipa" id="bIpa"></div><div class="ex" id="bEx"></div>
+            <a id="bLink" class="alink" target="_blank" rel="noopener">Audio-Direktlink ↗</a>
+            <button class="speak" id="bSpeak" title="Vorlesen">🔊</button></div>
+        </div>
+      </div>
+      <div class="actions"><button class="no" id="noBtn">😵 Nochmal</button><button class="ok" id="okBtn">😎 Gewusst</button></div>
+      <div class="nav"><button class="btn" id="prevBtn">← Zurück</button><button class="btn" id="flipBtn">Umdrehen</button><button class="btn" id="nextBtn">Weiter →</button></div>
+      <p class="kbd">Tastatur: Leertaste = umdrehen · ← nochmal · → gewusst</p>
+    </div>
+    <div class="done hidden" id="done"></div>
+  </section>
+
+  <section id="tab-quiz" style="display:none;flex-direction:column;gap:14px">
+    <div class="meta"><span id="qpos"></span><span id="qscore"></span></div>
+    <div class="progress"><i id="qbar"></i></div>
+    <div class="qbox" id="qbox">
+      <div class="tag" id="qTag"></div>
+      <div class="word" id="qWord"></div>
+      <div class="ex" id="qEx"></div>
+      <input id="qIn" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="Übersetzung eintippen …">
+      <div class="fb" id="qFb"></div>
+      <div class="row" style="justify-content:center">
+        <button class="btn" id="qSkip">Überspringen</button>
+        <button class="btn primary" id="qCheck">Prüfen</button>
+      </div>
+    </div>
+    <div class="done hidden" id="qdone"></div>
+  </section>
+
+  <section id="tab-list" style="display:none;flex-direction:column;gap:10px">
+    <input class="search" id="search" type="search" placeholder="Suchen (Englisch oder Deutsch) …">
+    <div class="list" id="list"></div>
+  </section>
+
+  <section id="tab-imp" style="display:none;flex-direction:column;gap:14px">
+    <div class="panel">
+      <div class="lbl">Neue Vokabeln importieren</div>
+      <p class="small">Format: eine Vokabel pro Zeile, Spalten getrennt durch <b>Semikolon</b>, <b>Tab</b> (z. B. aus Excel/Sheets kopiert) oder Komma. Kopfzeile ist optional. Pflicht sind nur <b>Englisch</b> und <b>Deutsch</b>.</p>
+      <pre class="fmt">Englisch;Aussprache;Deutsch;Beispiel;Unit;Überschrift;Audio
+school;sku:l;die Schule;My school is old.;Unit 1;School life;
+family;ˈfæmɪli;die Familie;The Bells are a family.;Unit 2;Family and home;</pre>
+      <p class="small">Unit und Überschrift werden als Tags/Filter verwendet. „Audio“ (Direktlink zur Audiodatei) ist optional – ohne Angabe wird automatisch eine britisch-englische Aussprache erzeugt. Doppelte Einträge (gleiches Wort in gleicher Unit + Überschrift) werden aktualisiert statt doppelt angelegt.</p>
+      <div class="fields">
+        <input id="defUnit" placeholder="Standard-Unit (falls Spalte fehlt)">
+        <input id="defHead" placeholder="Standard-Überschrift">
+      </div>
+      <textarea id="impText" placeholder="Hier einfügen …"></textarea>
+      <div class="row" style="margin-top:8px">
+        <label class="btn" style="cursor:pointer">Datei wählen<input type="file" id="impFile" accept=".csv,.tsv,.txt,text/*" hidden></label>
+        <button class="btn primary" id="impBtn">Importieren</button>
+      </div>
+      <div class="msg" id="impMsg"></div>
+    </div>
+    <div class="panel">
+      <div class="lbl">Wortliste exportieren</div>
+      <p class="small">Alle Vokabeln im gleichen Format inkl. Audio-Links (zum Sichern oder Weitergeben).</p>
+      <div class="row">
+        <button class="btn" id="expDl">CSV herunterladen</button>
+        <button class="btn" id="expCopy">CSV kopieren</button>
+        <button class="btn danger" id="delCustom">Importierte löschen</button>
+      </div>
+      <div class="msg" id="expMsg"></div>
+    </div>
+  </section>
+</div>
+
+<script>
+const BASE = [{"en": "school", "ipa": "sku:l", "de": "die Schule", "ex": "My school is old.", "unit": "Unit 1", "head": "School life"}, {"en": "life, lives", "ipa": "laɪf, laɪvz", "de": "das Leben, die Leben", "ex": "My life is great. Katie's and Nisha's lives are great.", "unit": "Unit 1", "head": "School life"}, {"en": "to go", "ipa": "gəʊ", "de": "gehen; fahren", "ex": "I go to TTS.", "unit": "Unit 1", "head": "Check in"}, {"en": "to", "ipa": "tu", "de": "in; zu; nach; bis", "ex": "I go to TTS.", "unit": "Unit 1", "head": "Check in"}, {"en": "in", "ipa": "ɪn", "de": "in; auf", "ex": "Wird auch im Deutschen so verwendet.", "unit": "Unit 1", "head": "Check in"}, {"en": "year", "ipa": "jɪə", "de": "die Klasse; die Jahrgangsstufe; das Jahr", "ex": "Year 7 (England) = 5. Klasse (Deutschland)", "unit": "Unit 1", "head": "Check in"}, {"en": "uniform", "ipa": "ˈjuːnɪfɔːm", "de": "die Uniform", "ex": "", "unit": "Unit 1", "head": "Check in"}, {"en": "it's (= it is)", "ipa": "ɪts", "de": "er/sie/es ist", "ex": "It's my uniform. It is blue.", "unit": "Unit 1", "head": "Check in"}, {"en": "OK", "ipa": "əʊˈkeɪ", "de": "okay", "ex": "", "unit": "Unit 1", "head": "Check in"}, {"en": "tutor", "ipa": "ˈtjuːtə", "de": "der Klassenlehrer / die Klassenlehrerin", "ex": "That is my tutor.", "unit": "Unit 1", "head": "Check in"}, {"en": "Mr", "ipa": "ˈmɪstə", "de": "Herr (Anrede)", "ex": "Mr Turner is Elliot's tutor.", "unit": "Unit 1", "head": "Check in"}, {"en": "he's (= he is)", "ipa": "hiːz", "de": "er ist", "ex": "He's my tutor. He is nice.", "unit": "Unit 1", "head": "Check in"}, {"en": "a", "ipa": "ə", "de": "ein/eine", "ex": "Mr Turner is a tutor.", "unit": "Unit 1", "head": "Check in"}, {"en": "science", "ipa": "ˈsaɪəns", "de": "Wissenschaft; Naturwissenschaft", "ex": "", "unit": "Unit 1", "head": "Check in"}, {"en": "teacher", "ipa": "ˈtiːtʃə", "de": "der Lehrer / die Lehrerin", "ex": "He's my tutor and a science teacher.", "unit": "Unit 1", "head": "Check in"}, {"en": "English", "ipa": "ˈɪŋɡlɪʃ", "de": "Englisch; englisch; aus England", "ex": "", "unit": "Unit 1", "head": "Check in"}, {"en": "Mrs", "ipa": "ˈmɪsɪz", "de": "Frau (Anrede)", "ex": "Mrs Bashir is a teacher.", "unit": "Unit 1", "head": "Check in"}, {"en": "she's (= she is)", "ipa": "ʃiːz", "de": "sie ist", "ex": "She's a teacher. She is nice.", "unit": "Unit 1", "head": "Check in"}, {"en": "caretaker", "ipa": "ˈkeəteɪkə", "de": "der Hausmeister / die Hausmeisterin", "ex": "Mrs Warren is the caretaker at TTS.", "unit": "Unit 1", "head": "Check in"}, {"en": "always", "ipa": "ˈɔːlweɪz", "de": "immer", "ex": "", "unit": "Unit 1", "head": "Check in"}, {"en": "busy", "ipa": "ˈbɪzi", "de": "beschäftigt; belebt; arbeitsreich", "ex": "", "unit": "Unit 1", "head": "Check in"}, {"en": "friend", "ipa": "frend", "de": "der Freund / die Freundin", "ex": "Josh is Elliot's friend.", "unit": "Unit 1", "head": "Check in"}, {"en": "new", "ipa": "njuː", "de": "neu", "ex": "", "unit": "Unit 1", "head": "Check in"}, {"en": "class", "ipa": "klɑːs", "de": "die Klasse; der Unterricht; der Kurs; die Unterrichtsstunde", "ex": "I'm in class 5c.", "unit": "Unit 1", "head": "Check in"}, {"en": "cool", "ipa": "kuːl", "de": "cool; super; kühl", "ex": "My friends are cool.", "unit": "Unit 1", "head": "Check in"}, {"en": "music", "ipa": "ˈmjuːzɪk", "de": "Musik", "ex": "", "unit": "Unit 1", "head": "Check in"}, {"en": "at", "ipa": "æt", "de": "in; an; um; bei; auf", "ex": "at school = in der Schule", "unit": "Unit 1", "head": "Station 1"}, {"en": "Good morning.", "ipa": "ɡʊd ˈmɔːnɪŋ", "de": "Guten Morgen.", "ex": "Good morning. Welcome to TTS.", "unit": "Unit 1", "head": "Station 1"}, {"en": "boy", "ipa": "bɔɪ", "de": "der Junge", "ex": "Elliot is a boy.", "unit": "Unit 1", "head": "Station 1"}, {"en": "girl", "ipa": "ɡɜːl", "de": "das Mädchen", "ex": "Nisha is a girl.", "unit": "Unit 1", "head": "Station 1"}, {"en": "to look at", "ipa": "lʊk æt", "de": "anschauen", "ex": "Look at this, please!", "unit": "Unit 1", "head": "Station 1"}, {"en": "board", "ipa": "bɔːd", "de": "die Tafel", "ex": "", "unit": "Unit 1", "head": "Station 1"}, {"en": "Can you help me?", "ipa": "kæn ju ˈhelp miː", "de": "Können Sie mir helfen?; Kannst du mir helfen?", "ex": "Katie, can you help me, please?", "unit": "Unit 1", "head": "Station 1"}, {"en": "yes", "ipa": "jes", "de": "ja", "ex": "Yes, Mrs Bashir is my teacher.", "unit": "Unit 1", "head": "Station 1"}, {"en": "of course", "ipa": "əv ˈkɔːs", "de": "natürlich; selbstverständlich", "ex": "Of course I can help you.", "unit": "Unit 1", "head": "Station 1"}, {"en": "to sit down", "ipa": "sɪt ˈdaʊn", "de": "sich hinsetzen; sich setzen", "ex": "Sit down, please, boys and girls.", "unit": "Unit 1", "head": "Station 1"}, {"en": "to be", "ipa": "biː", "de": "sein", "ex": "be: I am, you are, he is, she is", "unit": "Unit 1", "head": "Station 1"}, {"en": "quiet", "ipa": "ˈkwaɪət", "de": "ruhig; leise; still", "ex": "Be quiet in class, please.", "unit": "Unit 1", "head": "Station 1"}, {"en": "to listen (to)", "ipa": "ˈlɪsn", "de": "zuhören; anhören; hören", "ex": "Achtung: Das t wird nicht gesprochen.", "unit": "Unit 1", "head": "Station 1"}, {"en": "Don't talk.", "ipa": "dəʊnt tɔːk", "de": "Sei(d) still.; Rede(t) nicht.", "ex": "Achtung: Das l wird nicht gesprochen.", "unit": "Unit 1", "head": "Station 1"}, {"en": "Sorry.", "ipa": "ˈsɒri", "de": "Tut mir leid.; Entschuldigung.", "ex": "Sorry, Mr Turner.", "unit": "Unit 1", "head": "Station 1"}, {"en": "here", "ipa": "hɪə", "de": "hier", "ex": "Achtung Schreibweise: here", "unit": "Unit 1", "head": "Station 1"}, {"en": "book", "ipa": "bʊk", "de": "das Buch; das Heft", "ex": "This is my new English book.", "unit": "Unit 1", "head": "Station 1"}, {"en": "Excuse me!", "ipa": "ɪkˈskjuːz miː", "de": "Entschuldigung!", "ex": "Excuse me, can you help me, please?", "unit": "Unit 1", "head": "Station 1"}, {"en": "to have", "ipa": "hæv", "de": "haben", "ex": "Can I have that book, please?", "unit": "Unit 1", "head": "Station 1"}, {"en": "an", "ipa": "æn", "de": "ein/eine", "ex": "an English teacher, an orange book, a science teacher, a black book", "unit": "Unit 1", "head": "Station 1"}, {"en": "pen", "ipa": "pen", "de": "der Füller; der Stift", "ex": "I have an orange pen.", "unit": "Unit 1", "head": "Station 1"}, {"en": "Here you are.", "ipa": "ˌhɪə ju ˈɑː", "de": "Bitte schön.", "ex": "Can I have a pen, please? – Here you are.", "unit": "Unit 1", "head": "Station 1"}, {"en": "bag", "ipa": "bæɡ", "de": "die Tasche; die Tüte", "ex": "This is my school bag.", "unit": "Unit 1", "head": "Station 1"}, {"en": "folder", "ipa": "ˈfəʊldə", "de": "der Ordner; die Mappe", "ex": "This is my new music folder.", "unit": "Unit 1", "head": "Station 1"}, {"en": "exercise book", "ipa": "ˈeksəsaɪz bʊk", "de": "das Übungsheft", "ex": "My English exercise book is red.", "unit": "Unit 1", "head": "Station 1"}, {"en": "phone", "ipa": "fəʊn", "de": "das Handy; das Telefon", "ex": "My phone is in my folder.", "unit": "Unit 1", "head": "Station 1"}, {"en": "tablet", "ipa": "ˈtæblət", "de": "das Tablet", "ex": "My new tablet is grey.", "unit": "Unit 1", "head": "Station 1"}, {"en": "pencil", "ipa": "ˈpensl", "de": "der Bleistift; der Buntstift", "ex": "I have ten pencils in my bag.", "unit": "Unit 1", "head": "Station 1"}, {"en": "pair of scissors", "ipa": "peər əv ˈsɪzəz", "de": "die Schere", "ex": "Can I have a pair of scissors, please?", "unit": "Unit 1", "head": "Station 1"}, {"en": "sharpener", "ipa": "ˈʃɑːpnə", "de": "der Spitzer", "ex": "Where is my sharpener? – In your bag.", "unit": "Unit 1", "head": "Station 1"}, {"en": "rubber", "ipa": "ˈrʌbə", "de": "der Radiergummi", "ex": "My rubber is blue and red.", "unit": "Unit 1", "head": "Station 1"}, {"en": "ruler", "ipa": "ˈruːlə", "de": "das Lineal", "ex": "Can I have your ruler, please?", "unit": "Unit 1", "head": "Station 1"}, {"en": "pencil case", "ipa": "ˈpensl keɪs", "de": "das Federmäppchen", "ex": "My pencil case is in my bag.", "unit": "Unit 1", "head": "Station 1"}, {"en": "there are", "ipa": "ðeər ɑː", "de": "da sind; es gibt", "ex": "There are two pens in my pencil case.", "unit": "Unit 1", "head": "Station 1"}, {"en": "for", "ipa": "fɔː", "de": "für", "ex": "Achtung Schreibweise: for", "unit": "Unit 1", "head": "Station 1"}, {"en": "no", "ipa": "nəʊ", "de": "nein; kein/keine", "ex": "no ↔ yes", "unit": "Unit 1", "head": "Station 1"}, {"en": "to close", "ipa": "kləʊz", "de": "schließen; zumachen", "ex": "Close your books, please.", "unit": "Unit 1", "head": "Station 1"}, {"en": "to open", "ipa": "ˈəʊpən", "de": "öffnen; aufmachen", "ex": "to open ↔ to close", "unit": "Unit 1", "head": "Station 1"}, {"en": "again", "ipa": "əˈɡen", "de": "noch einmal; wieder", "ex": "Say that again, please.", "unit": "Unit 1", "head": "Station 1"}, {"en": "to write", "ipa": "raɪt", "de": "schreiben", "ex": "", "unit": "Unit 1", "head": "Station 1"}, {"en": "on", "ipa": "ɒn", "de": "an; auf", "ex": "My name is on the board.", "unit": "Unit 1", "head": "Station 1"}, {"en": "to take out", "ipa": "teɪk ˈaʊt", "de": "herausnehmen; herausbringen", "ex": "Take out your books, please.", "unit": "Unit 1", "head": "Station 1"}, {"en": "rule", "ipa": "ruːl", "de": "die Regel", "ex": "Look at the school rules.", "unit": "Unit 1", "head": "Listening"}, {"en": "classroom", "ipa": "ˈklɑːsruːm", "de": "das Klassenzimmer", "ex": "Mr Turner is in the classroom.", "unit": "Unit 1", "head": "Listening"}, {"en": "playground", "ipa": "ˈpleɪɡraʊnd", "de": "der Schulhof; der Pausenhof; der Spielplatz", "ex": "No phones in the playground!", "unit": "Unit 1", "head": "Listening"}, {"en": "cafeteria", "ipa": "ˌkæfəˈtɪəriə", "de": "die Cafeteria; die Mensa", "ex": "Die Betonung liegt hier: cafeteria", "unit": "Unit 1", "head": "Listening"}, {"en": "toilet", "ipa": "ˈtɔɪlət", "de": "die Toilette", "ex": "Where is the toilet?", "unit": "Unit 1", "head": "Listening"}, {"en": "library", "ipa": "ˈlaɪbri", "de": "die Bibliothek; die Bücherei", "ex": "What is in the library? – Books.", "unit": "Unit 1", "head": "Listening"}, {"en": "gym", "ipa": "dʒɪm", "de": "die Turnhalle; das Fitnessstudio", "ex": "The school gym is old.", "unit": "Unit 1", "head": "Listening"}, {"en": "office", "ipa": "ˈɒfɪs", "de": "das Büro", "ex": "Mr Turner is in the school office.", "unit": "Unit 1", "head": "Listening"}, {"en": "day", "ipa": "deɪ", "de": "der Tag", "ex": "", "unit": "Unit 1", "head": "Station 2"}, {"en": "to like", "ipa": "laɪk", "de": "mögen", "ex": "I like this book.", "unit": "Unit 1", "head": "Station 2"}, {"en": "lesson", "ipa": "ˈlesn", "de": "die Schulstunde; der Unterricht", "ex": "Maths is my favourite lesson.", "unit": "Unit 1", "head": "Station 2"}, {"en": "to be fun", "ipa": "biː ˈfʌn", "de": "Spaß machen; witzig sein", "ex": "The lessons are fun here.", "unit": "Unit 1", "head": "Station 2"}, {"en": "subject", "ipa": "ˈsʌbdʒɪkt", "de": "das Schulfach", "ex": "English and science are school subjects.", "unit": "Unit 1", "head": "Station 2"}, {"en": "because", "ipa": "bɪˈkɒz", "de": "weil; da", "ex": "I like science because it's fun.", "unit": "Unit 1", "head": "Station 2"}, {"en": "interesting", "ipa": "ˈɪntrəstɪŋ", "de": "interessant", "ex": "Science is interesting.", "unit": "Unit 1", "head": "Station 2"}, {"en": "maths", "ipa": "mæθs", "de": "Mathematik; Mathe", "ex": "Maths is OK.", "unit": "Unit 1", "head": "Station 2"}, {"en": "art", "ipa": "ɑːt", "de": "Kunst", "ex": "I like art.", "unit": "Unit 1", "head": "Station 2"}, {"en": "but", "ipa": "bʌt", "de": "aber", "ex": "My phone is old, but it's OK.", "unit": "Unit 1", "head": "Station 2"}, {"en": "difficult", "ipa": "ˈdɪfɪklt", "de": "schwierig", "ex": "Maths is difficult.", "unit": "Unit 1", "head": "Station 2"}, {"en": "Tuesday", "ipa": "ˈtjuːzdeɪ", "de": "Dienstag", "ex": "Tuesday is a boring day.", "unit": "Unit 1", "head": "Station 2"}, {"en": "Thursday", "ipa": "ˈθɜːzdeɪ", "de": "Donnerstag", "ex": "Thursday is a great day.", "unit": "Unit 1", "head": "Station 2"}, {"en": "they're (= they are)", "ipa": "ðeə", "de": "sie sind", "ex": "They're my friends. They are cool.", "unit": "Unit 1", "head": "Station 2"}, {"en": "to be good at", "ipa": "biː ˈɡʊd æt", "de": "gut sein in", "ex": "I'm good at English.", "unit": "Unit 1", "head": "Station 2"}, {"en": "Friday", "ipa": "ˈfraɪdeɪ", "de": "Freitag", "ex": "Thursday, Friday, …", "unit": "Unit 1", "head": "Station 2"}, {"en": "I don't like …", "ipa": "aɪ dəʊnt ˈlaɪk", "de": "Ich mag … nicht; … gefällt mir nicht.", "ex": "I don't like … ↔ I like …", "unit": "Unit 1", "head": "Station 2"}, {"en": "Wednesday", "ipa": "ˈwenzdeɪ", "de": "Mittwoch", "ex": "Das d wird nicht gesprochen.", "unit": "Unit 1", "head": "Station 2"}, {"en": "PE (= Physical Education)", "ipa": "ˌpiː ˈiː", "de": "Sportunterricht", "ex": "We have PE in the gym.", "unit": "Unit 1", "head": "Station 2"}, {"en": "boring", "ipa": "ˈbɔːrɪŋ", "de": "langweilig", "ex": "boring ↔ interesting", "unit": "Unit 1", "head": "Station 2"}, {"en": "easy", "ipa": "ˈiːzi", "de": "einfach; leicht", "ex": "easy ↔ difficult", "unit": "Unit 1", "head": "Station 2"}, {"en": "with", "ipa": "wɪð", "de": "mit", "ex": "I can help you with this.", "unit": "Unit 1", "head": "Station 2"}, {"en": "homework", "ipa": "ˈhəʊmwɜːk", "de": "die Hausaufgabe", "ex": "This is your homework. We have maths homework.", "unit": "Unit 1", "head": "Station 2"}, {"en": "sure", "ipa": "ʃɔː", "de": "sicher", "ex": "Sure, you can have my book.", "unit": "Unit 1", "head": "Station 2"}, {"en": "number", "ipa": "ˈnʌmbə", "de": "die Zahl; die Nummer; die Anzahl", "ex": "Numbers: zero, one, two, three, four.", "unit": "Unit 1", "head": "Station 2"}, {"en": "experiment", "ipa": "ɪkˈsperɪmənt", "de": "der Versuch; das Experiment", "ex": "Die Betonung liegt hier: experiment", "unit": "Unit 1", "head": "Station 2"}, {"en": "sport", "ipa": "spɔːt", "de": "der Sport; die Sportart", "ex": "Sport isn't my favourite subject.", "unit": "Unit 1", "head": "Station 2"}, {"en": "isn't (= is not)", "ipa": "ˈɪznt", "de": "ist nicht", "ex": "Sport isn't my favourite subject.", "unit": "Unit 1", "head": "Station 2"}, {"en": "Saturday", "ipa": "ˈsætədeɪ", "de": "Samstag", "ex": "Saturday – no school!", "unit": "Unit 1", "head": "Station 2"}, {"en": "Sunday", "ipa": "ˈsʌndeɪ", "de": "Sonntag", "ex": "Sunday! Nice and quiet!", "unit": "Unit 1", "head": "Station 2"}, {"en": "Monday", "ipa": "ˈmʌndeɪ", "de": "Montag", "ex": "My favourite day is Monday.", "unit": "Unit 1", "head": "Station 2"}, {"en": "biology", "ipa": "baɪˈɒlədʒi", "de": "Biologie", "ex": "Die Betonung liegt hier: biology", "unit": "Unit 1", "head": "Station 2"}, {"en": "geography", "ipa": "dʒiˈɒɡrəfi", "de": "Erdkunde; Geografie", "ex": "Die Betonung liegt hier: geography", "unit": "Unit 1", "head": "Station 2"}, {"en": "German", "ipa": "ˈdʒɜːmən", "de": "Deutsch", "ex": "German is easy.", "unit": "Unit 1", "head": "Station 2"}, {"en": "history", "ipa": "ˈhɪstri", "de": "Geschichte", "ex": "History is a difficult subject.", "unit": "Unit 1", "head": "Station 2"}, {"en": "IT (= Information Technology)", "ipa": "ˌaɪ ˈtiː", "de": "Informatik; Computerunterricht", "ex": "IT? – Where's my tablet?", "unit": "Unit 1", "head": "Station 2"}, {"en": "technology", "ipa": "tekˈnɒlədʒi", "de": "Technik", "ex": "Die Betonung liegt hier: technology", "unit": "Unit 1", "head": "Station 2"}, {"en": "drama", "ipa": "ˈdrɑːmə", "de": "Theater; Drama", "ex": "Drama is a boring subject.", "unit": "Unit 1", "head": "Station 2"}, {"en": "tutor time", "ipa": "ˈtjuːtə taɪm", "de": "die Klassenstunde", "ex": "Tutor time is time for your tutor.", "unit": "Unit 1", "head": "Station 2"}, {"en": "RE (= Religious Education)", "ipa": "ˌɑːr ˈiː", "de": "Religionsunterricht", "ex": "RE is on Wednesday.", "unit": "Unit 1", "head": "Station 2"}, {"en": "we", "ipa": "wiː", "de": "wir", "ex": "We are in Mr Turner's class.", "unit": "Unit 1", "head": "Station 2"}, {"en": "cat", "ipa": "kæt", "de": "die Katze", "ex": "", "unit": "Unit 1", "head": "Station 2"}, {"en": "big", "ipa": "bɪɡ", "de": "groß", "ex": "TTS is a big school.", "unit": "Unit 1", "head": "Station 2"}, {"en": "tour", "ipa": "tʊə", "de": "der Rundgang; die Tour", "ex": "This is a tour of TTS.", "unit": "Unit 1", "head": "Viewing"}, {"en": "to have (= essen)", "ipa": "hæv", "de": "essen", "ex": "to have = essen · to have = haben", "unit": "Unit 1", "head": "Viewing"}, {"en": "lunch", "ipa": "lʌntʃ", "de": "das Mittagessen", "ex": "We have lunch in the cafeteria.", "unit": "Unit 1", "head": "Viewing"}, {"en": "to make", "ipa": "meɪk", "de": "machen; tun; bilden; hier: drehen", "ex": "We make films at TTS.", "unit": "Unit 1", "head": "Viewing"}, {"en": "film", "ipa": "fɪlm", "de": "der Film", "ex": "We make films at TTS.", "unit": "Unit 1", "head": "Viewing"}, {"en": "recording studio", "ipa": "rɪˈkɔːdɪŋ ˌstjuːdiəʊ", "de": "das Tonstudio", "ex": "We make music in the recording studio.", "unit": "Unit 1", "head": "Viewing"}, {"en": "to find", "ipa": "faɪnd", "de": "finden; herausfinden", "ex": "Find a book in the library.", "unit": "Unit 1", "head": "Viewing"}, {"en": "badminton", "ipa": "ˈbædmɪntən", "de": "das Badminton", "ex": "I like football and badminton.", "unit": "Unit 1", "head": "Viewing"}, {"en": "football", "ipa": "ˈfʊtbɔːl", "de": "der Fußball", "ex": "We play football in the gym.", "unit": "Unit 1", "head": "Viewing"}, {"en": "sign language", "ipa": "ˈsaɪn ˌlæŋɡwɪdʒ", "de": "die Gebärdensprache", "ex": "I'm good at sign language.", "unit": "Unit 1", "head": "Viewing"}, {"en": "T-shirt", "ipa": "ˈtiː ʃɜːt", "de": "das T-Shirt", "ex": "We have blue T-shirts for PE.", "unit": "Unit 1", "head": "Viewing"}, {"en": "game", "ipa": "ɡeɪm", "de": "das Spiel", "ex": "games: football, badminton, …", "unit": "Unit 1", "head": "Viewing"}, {"en": "all", "ipa": "ɔːl", "de": "alle; ganz; alles; all", "ex": "We all like English.", "unit": "Unit 1", "head": "Reading"}, {"en": "problem", "ipa": "ˈprɒbləm", "de": "das Problem", "ex": "There are no problems.", "unit": "Unit 1", "head": "Reading"}, {"en": "let's (= let us)", "ipa": "lets", "de": "lass uns", "ex": "Let's go and find your bag.", "unit": "Unit 1", "head": "Reading"}, {"en": "not", "ipa": "nɒt", "de": "nicht", "ex": "My bag is not in the gym.", "unit": "Unit 1", "head": "Reading"}, {"en": "there", "ipa": "ðeə", "de": "da; dort", "ex": "there ↔ here", "unit": "Unit 1", "head": "Reading"}, {"en": "to ask", "ipa": "ɑːsk", "de": "fragen", "ex": "Let's ask that boy.", "unit": "Unit 1", "head": "Reading"}, {"en": "someone", "ipa": "ˈsʌmwʌn", "de": "jemand", "ex": "Someone is in the playground.", "unit": "Unit 1", "head": "Reading"}, {"en": "quick", "ipa": "kwɪk", "de": "schnell", "ex": "Quick! I can see my bag.", "unit": "Unit 1", "head": "Reading"}, {"en": "bike", "ipa": "baɪk", "de": "das Fahrrad", "ex": "My new bike is red.", "unit": "Unit 1", "head": "Reading"}, {"en": "to stop", "ipa": "stɒp", "de": "anhalten; stoppen; stehen bleiben; aufhören; abstellen", "ex": "Stop! You have my bag.", "unit": "Unit 1", "head": "Reading"}, {"en": "our", "ipa": "aʊə", "de": "unser/unsere", "ex": "Elliot is in our class.", "unit": "Unit 1", "head": "Reading"}, {"en": "has", "ipa": "hæz", "de": "hat", "ex": "Look! He has my bag.", "unit": "Unit 1", "head": "Reading"}, {"en": "I'm sorry.", "ipa": "aɪm ˈsɒri", "de": "Es tut mir leid.; Entschuldigung.", "ex": "I'm sorry, Elliot. It's your bag.", "unit": "Unit 1", "head": "Reading"}, {"en": "who", "ipa": "huː", "de": "wer", "ex": "Who is that on the bike?", "unit": "Unit 1", "head": "Reading"}, {"en": "I spy with my little eye …", "ipa": "aɪ spaɪ wɪð maɪ ˈlɪtl aɪ", "de": "Ich sehe was, was du nicht siehst …", "ex": "I spy with my little eye a blue bag.", "unit": "Unit 1", "head": "Reading"}];
+
+/* ---------- Daten ---------- */
+const KEY="vok-trainer-v2", CKEY="vok-custom-v2", OLD="vok-unit1-v1";
+let store={status:{},dir:"en-de",units:null,heads:null,only:false,shuffle:true};
+let custom=[];
+try{const s=JSON.parse(localStorage.getItem(KEY)||"null"); if(s) store=Object.assign(store,s);}catch(e){}
+try{const c=JSON.parse(localStorage.getItem(CKEY)||"[]"); if(Array.isArray(c)) custom=c;}catch(e){}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(store));}catch(e){}}
+function saveCustom(){try{localStorage.setItem(CKEY,JSON.stringify(custom));}catch(e){}}
+const keyOf=c=>c.unit+"|"+c.head+"|"+c.en;
+let CARDS=[];
+function rebuild(){
+  CARDS=[...BASE,...custom].map(c=>Object.assign({audio:""},c));
+  CARDS.forEach(c=>c.id=keyOf(c));
+}
+rebuild();
+/* Migration alter Lernstand (Zahlen-IDs) */
+try{
+  const old=JSON.parse(localStorage.getItem(OLD)||"null");
+  if(old&&old.status&&!store.migrated){
+    Object.keys(old.status).forEach(i=>{const c=BASE[+i]; if(c) store.status[keyOf(c)]=old.status[i];});
+    store.migrated=true; save();
+  }
+}catch(e){}
+
+const $=id=>document.getElementById(id);
+const uniq=a=>[...new Set(a)];
+const allUnits=()=>uniq(CARDS.map(c=>c.unit));
+const headsOf=us=>uniq(CARDS.filter(c=>us.includes(c.unit)).map(c=>c.head));
+function sanitizeSel(){
+  const au=allUnits();
+  store.units=(store.units||au).filter(u=>au.includes(u)); if(!store.units.length) store.units=au;
+  const ah=headsOf(store.units);
+  store.heads=(store.heads||ah).filter(h=>ah.includes(h)); if(!store.heads.length) store.heads=ah;
+}
+sanitizeSel();
+
+let queue=[],idx=0,tab="cards";
+let quiz={q:[],i:0,ok:0,answered:false};
+function shuf(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+const sel=()=>CARDS.filter(c=>store.units.includes(c.unit)&&store.heads.includes(c.head));
+function buildPool(){
+  let p=sel(); if(store.only) p=p.filter(c=>store.status[c.id]!=="k");
+  return store.shuffle?shuf(p):p;
+}
+const tagOf=c=>c.unit+" · "+c.head;
+
+
+/* ---------- XP, Streak, Konfetti ---------- */
+function today(){const d=new Date();return d.getFullYear()+"-"+(d.getMonth()+1)+"-"+d.getDate();}
+function touchStreak(){
+  const t=today();if(store.lastDay===t)return;
+  const y=new Date();y.setDate(y.getDate()-1);const yd=y.getFullYear()+"-"+(y.getMonth()+1)+"-"+y.getDate();
+  store.streak=(store.lastDay===yd)?(store.streak||0)+1:1;store.lastDay=t;
+}
+function renderHud(){
+  const lvl=1+Math.floor((store.xp||0)/100);
+  $("xp").textContent="⭐ "+(store.xp||0)+" · Lv "+lvl;
+  $("streak").textContent="🔥 "+(store.streak||0);
+}
+function pop(txt){
+  const e=document.createElement("div");e.className="pop";e.textContent=txt;document.body.appendChild(e);setTimeout(()=>e.remove(),950);
+}
+function addXp(n){store.xp=(store.xp||0)+n;touchStreak();save();renderHud();pop("+"+n+" XP");}
+function confetti(){
+  const em=["🎉","⭐","✨","🔥","💜","🎊"];
+  for(let i=0;i<28;i++){
+    const e=document.createElement("div");e.className="conf";e.textContent=em[i%em.length];
+    e.style.left=Math.random()*100+"vw";e.style.animationDuration=(1.6+Math.random()*1.6)+"s";e.style.animationDelay=(Math.random()*.4)+"s";
+    document.body.appendChild(e);setTimeout(()=>e.remove(),3800);
+  }
+}
+
+/* ---------- Audio ---------- */
+function ttsText(t){return t.replace(/\(.*?\)/g,"").replace(/↔.*/,"").replace(/[…]/g,"").replace(/\s+/g," ").trim();}
+function ttsUrl(t){return "https://translate.google.com/translate_tts?ie=UTF-8&client=tw-ob&tl=en-GB&q="+encodeURIComponent(ttsText(t));}
+const audioOf=c=>c.audio||ttsUrl(c.en);
+let curAudio=null;
+function fallbackSpeak(t){try{if(!("speechSynthesis" in window))return;const u=new SpeechSynthesisUtterance(ttsText(t));u.lang="en-GB";u.rate=.9;speechSynthesis.cancel();speechSynthesis.speak(u);}catch(e){}}
+function speak(c){
+  try{
+    if(curAudio) curAudio.pause();
+    const a=new Audio(audioOf(c));curAudio=a;
+    a.onerror=()=>fallbackSpeak(c.en);
+    const pr=a.play(); if(pr&&pr.catch) pr.catch(()=>fallbackSpeak(c.en));
+  }catch(e){fallbackSpeak(c.en);}
+}
+function updateStats(){
+  const k=CARDS.filter(c=>store.status[c.id]==="k").length;
+  $("stats").textContent=`${CARDS.length} Vokabeln · ${k} gewusst`;
+}
+
+/* ---------- Filter-Chips ---------- */
+function chip(txt,on,fn,cls){const b=document.createElement("button");b.className="chip "+(cls||"")+(on?" on":"");b.textContent=txt;b.onclick=fn;return b;}
+function renderChips(){
+  const au=allUnits(),uc=$("unitChips");uc.innerHTML="";
+  uc.appendChild(chip("Alle",store.units.length===au.length,()=>{store.units=store.units.length===au.length?[au[0]]:au.slice();store.heads=null;sanitizeSel();save();renderChips();restart();}));
+  au.forEach(u=>uc.appendChild(chip(u,store.units.includes(u),()=>{
+    if(store.units.includes(u)){if(store.units.length>1)store.units=store.units.filter(x=>x!==u);}
+    else store.units=au.filter(x=>store.units.includes(x)||x===u);
+    store.heads=null;sanitizeSel();save();renderChips();restart();})));
+  const ah=headsOf(store.units),hc=$("headChips");hc.innerHTML="";
+  hc.appendChild(chip("Alle",store.heads.length===ah.length,()=>{store.heads=store.heads.length===ah.length?[ah[0]]:ah.slice();save();renderChips();restart();},"h"));
+  ah.forEach(h=>hc.appendChild(chip(h,store.heads.includes(h),()=>{
+    if(store.heads.includes(h)){if(store.heads.length>1)store.heads=store.heads.filter(x=>x!==h);}
+    else store.heads=ah.filter(x=>store.heads.includes(x)||x===h);
+    save();renderChips();restart();},"h")));
+}
+const renderDir=()=>{$("dirBtn").textContent=store.dir==="en-de"?"EN → DE":"DE → EN";};
+
+/* ---------- Karten ---------- */
+const front=c=>store.dir==="en-de"?{w:c.en,ipa:c.ipa}:{w:c.de,ipa:""};
+const back=c=>store.dir==="en-de"?{w:c.de,ipa:"",ex:c.ex}:{w:c.en,ipa:c.ipa,ex:c.ex};
+function showCard(){
+  const area=$("cardArea"),done=$("done");
+  if(!queue.length){area.classList.add("hidden");done.classList.remove("hidden");done.innerHTML="<h2>Keine Karten</h2><p>Mit diesen Filtern gibt es nichts zu lernen.</p>";$("pos").textContent="0 / 0";return;}
+  if(idx>=queue.length){
+    area.classList.add("hidden");done.classList.remove("hidden");
+    const k=queue.filter(c=>store.status[c.id]==="k").length;
+    done.innerHTML=`<div class="big">🏆</div><h2>Durchgang fertig!</h2><p>${k} von ${queue.length} gewusst.</p><div class="row" style="justify-content:center"><button class="btn primary" id="againAll">Nochmal alle</button>${k<queue.length?'<button class="btn" id="againUnk">Nur nicht gewusste</button>':''}</div>`;
+    $("againAll").onclick=()=>{store.only=false;$("onlyUnknown").checked=false;save();restart();};
+    const u=$("againUnk");if(u)u.onclick=()=>{store.only=true;$("onlyUnknown").checked=true;save();restart();};
+    $("bar").style.width="100%";$("pos").textContent=`${queue.length} / ${queue.length}`;if(k===queue.length)confetti();else if(k>=queue.length*.7)confetti();return;
+  }
+  area.classList.remove("hidden");done.classList.add("hidden");
+  const c=queue[idx],f=front(c),b=back(c);
+  $("card").classList.remove("flip");
+  $("fTag").textContent=tagOf(c);$("bTag").textContent=tagOf(c);
+  $("fWord").textContent=f.w;$("fIpa").textContent=f.ipa?`[${f.ipa}]`:"";
+  $("bWord").textContent=b.w;$("bIpa").textContent=b.ipa?`[${b.ipa}]`:"";$("bEx").textContent=b.ex||"";
+  $("bLink").href=audioOf(c);
+  const st=store.status[c.id],s=$("fState");
+  s.textContent=st==="k"?"✓ gewusst":st==="u"?"💪 üben":"";s.className="state "+(st||"");
+  $("pos").textContent=`${idx+1} / ${queue.length}`;
+  $("bar").style.width=(idx/queue.length*100)+"%";
+  updateStats();
+}
+const flip=()=>$("card").classList.toggle("flip");
+function mark(v){if(idx>=queue.length)return;store.status[queue[idx].id]=v;save();if(v==="k")addXp(10);idx++;showCard();}
+function restart(){
+  if(tab==="cards"){queue=buildPool();idx=0;showCard();}
+  else if(tab==="quiz")startQuiz();
+  else if(tab==="list")renderList();
+  updateStats();
+}
+
+/* ---------- Tippen ---------- */
+const norm=s=>s.toLowerCase().replace(/\(.*?\)/g,"").replace(/[’]/g,"'").replace(/[.!?,…]/g,"").replace(/\s+/g," ").trim();
+function answersFor(c){
+  if(store.dir==="en-de"){
+    return c.de.split(";").flatMap(a=>{
+      a=norm(a.replace(/hier:\s*/,""));
+      const noArt=a.replace(/^(der|die|das)\s*(\/\s*(der|die|das))?\s*/,"").replace(/^\/?\s*/,"");
+      return [a,noArt];
+    }).filter(Boolean);
+  }
+  const e=norm(c.en.split(/,|\(=/)[0]),alt=[e,e.replace(/^to /,"")];
+  const m=c.en.match(/\(= ([^)]+)\)/);if(m)alt.push(norm(m[1]));
+  return alt.filter(Boolean);
+}
+function startQuiz(){
+  quiz={q:buildPool(),i:0,ok:0,answered:false};
+  $("qdone").classList.add("hidden");$("qbox").classList.remove("hidden");nextQ(true);
+}
+function nextQ(first){
+  if(!first)quiz.i++;
+  if(!quiz.q.length||quiz.i>=quiz.q.length){
+    $("qbox").classList.add("hidden");$("qdone").classList.remove("hidden");
+    if(!quiz.q.length){$("qdone").innerHTML="<h2>Keine Karten</h2><p>Mit diesen Filtern gibt es nichts zu üben.</p>";return;}
+    $("qdone").innerHTML=`<div class="big">🏆</div><h2>Geschafft!</h2><p>${quiz.ok} von ${quiz.q.length} richtig.</p><button class="btn primary" id="qAgain">Nochmal</button>`;
+    $("qAgain").onclick=startQuiz;if(quiz.ok>=quiz.q.length*.7)confetti();$("qbar").style.width="100%";$("qpos").textContent=`${quiz.q.length} / ${quiz.q.length}`;return;
+  }
+  const c=quiz.q[quiz.i];quiz.answered=false;
+  $("qTag").textContent=tagOf(c)+" · "+(store.dir==="en-de"?"auf Deutsch":"auf Englisch");
+  $("qWord").textContent=store.dir==="en-de"?c.en:c.de;$("qEx").textContent="";
+  const inp=$("qIn");inp.value="";inp.className="";inp.disabled=false;inp.focus({preventScroll:true});
+  $("qFb").textContent="";$("qFb").className="fb";$("qCheck").textContent="Prüfen";
+  $("qpos").textContent=`${quiz.i+1} / ${quiz.q.length}`;$("qscore").textContent=`${quiz.ok} richtig`;
+  $("qbar").style.width=(quiz.i/quiz.q.length*100)+"%";
+}
+function checkQ(giveUp){
+  if(!quiz.q.length||quiz.i>=quiz.q.length)return;
+  if(quiz.answered){nextQ();return;}
+  const c=quiz.q[quiz.i],inp=$("qIn"),val=norm(inp.value);
+  const ok=!giveUp&&val&&answersFor(c).includes(val);
+  quiz.answered=true;inp.disabled=true;
+  const sol=store.dir==="en-de"?c.de:c.en;
+  if(ok){quiz.ok++;store.status[c.id]="k";addXp(15);inp.className="good";$("qFb").className="fb good";$("qFb").textContent="✅ Richtig! "+sol;}
+  else{store.status[c.id]="u";inp.className="bad";$("qFb").className="fb bad";$("qFb").textContent=(giveUp?"":"❌ ")+"Lösung: "+sol;}
+  $("qEx").textContent=c.ex||"";save();$("qscore").textContent=`${quiz.ok} richtig`;$("qCheck").textContent="Weiter →";
+  if(store.dir==="de-en")speak(c);
+  updateStats();
+}
+
+/* ---------- Liste ---------- */
+function renderList(){
+  const q=($("search").value||"").toLowerCase().trim(),box=$("list");box.innerHTML="";
+  let last="",n=0;
+  sel().forEach(c=>{
+    if(q&&!(c.en.toLowerCase().includes(q)||c.de.toLowerCase().includes(q)))return;
+    if(tagOf(c)!==last){last=tagOf(c);const h=document.createElement("div");h.className="sec";h.textContent=last;box.appendChild(h);}
+    const d=document.createElement("div");d.className="item";
+    d.innerHTML=`<div><b></b><small></small></div><div><span></span><br></div><div class="dot ${store.status[c.id]||""}"></div>`;
+    d.children[0].children[0].textContent=c.en;d.children[0].children[1].textContent=c.ipa?`[${c.ipa}]`:"";
+    d.children[1].children[0].textContent=c.de;
+    const l=document.createElement("a");l.href=audioOf(c);l.target="_blank";l.rel="noopener";l.className="alink";l.textContent="🔊 Audio ↗";
+    l.onclick=e=>{e.preventDefault();e.stopPropagation();speak(c);};
+    d.children[1].appendChild(l);
+    d.onclick=()=>speak(c);box.appendChild(d);n++;
+  });
+  if(!n)box.innerHTML='<p class="kbd" style="padding:20px">Nichts gefunden.</p>';
+}
+
+/* ---------- Import / Export ---------- */
+function parseTable(text){
+  text=text.replace(/^﻿/,"");
+  const first=text.split(/\r?\n/).find(l=>l.trim())||"";
+  const d=first.includes("\t")?"\t":first.includes(";")?";":",";
+  const rows=[];let row=[],cur="",q=false;
+  for(let i=0;i<text.length;i++){
+    const ch=text[i];
+    if(q){ if(ch==='"'){ if(text[i+1]==='"'){cur+='"';i++;} else q=false; } else cur+=ch; }
+    else if(ch==='"'&&cur==="") q=true;
+    else if(ch===d){row.push(cur);cur="";}
+    else if(ch==="\n"||ch==="\r"){ if(ch==="\r"&&text[i+1]==="\n")i++; row.push(cur);cur="";rows.push(row);row=[]; }
+    else cur+=ch;
+  }
+  row.push(cur);rows.push(row);
+  return rows.map(r=>r.map(x=>x.trim())).filter(r=>r.some(x=>x));
+}
+function importText(text){
+  const rows=parseTable(text);
+  if(rows.length&&/^(englisch|english|en)$/i.test(rows[0][0]))rows.shift();
+  const dU=$("defUnit").value.trim()||"Eigene Vokabeln",dH=$("defHead").value.trim()||"Import";
+  let added=0,updated=0,skipped=0;
+  rows.forEach(r=>{
+    const c={en:r[0]||"",ipa:(r[1]||"").replace(/^\[|\]$/g,""),de:r[2]||"",ex:r[3]||"",unit:r[4]||dU,head:r[5]||dH,audio:/^https?:\/\//i.test(r[6]||"")?r[6]:""};
+    if(!c.en||!c.de){skipped++;return;}
+    const k=keyOf(c);
+    const bi=BASE.findIndex(b=>keyOf(b)===k);
+    if(bi>=0){ // vorhandene Basis-Vokabel überschreiben
+      if(c.audio){const ci=custom.findIndex(x=>keyOf(x)===k); if(ci>=0)custom[ci]=c;else custom.push(c);updated++;} else skipped++;
+      return;
+    }
+    const ci=custom.findIndex(x=>keyOf(x)===k);
+    if(ci>=0){custom[ci]=c;updated++;}else{custom.push(c);added++;}
+  });
+  saveCustom();rebuild();store.units=null;store.heads=null;sanitizeSel();save();renderChips();updateStats();
+  return {added,updated,skipped};
+}
+const csvCell=s=>/[;"\n\r\t]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s;
+function toCsv(){
+  const h="Englisch;Aussprache;Deutsch;Beispiel;Unit;Überschrift;Audio";
+  return [h,...CARDS.map(c=>[c.en,c.ipa,c.de,c.ex,c.unit,c.head,audioOf(c)].map(csvCell).join(";"))].join("\n");
+}
+function msg(id,t,cls){const e=$(id);e.textContent=t;e.className="msg "+(cls||"");}
+
+/* ---------- Tabs & Events ---------- */
+function setTab(t){
+  tab=t;
+  document.querySelectorAll(".tabs button").forEach(b=>b.classList.toggle("on",b.dataset.tab===t));
+  ["cards","quiz","list","imp"].forEach(n=>{$("tab-"+n).style.display=n===t?"flex":"none";});
+  $("filters").classList.toggle("hidden",t==="imp");
+  restart();
+}
+document.querySelectorAll(".tabs button").forEach(b=>b.onclick=()=>setTab(b.dataset.tab));
+$("scene").onclick=e=>{if(e.target.closest(".speak")||e.target.closest("a"))return;flip();};
+$("fSpeak").onclick=e=>{e.stopPropagation();if(queue[idx])speak(queue[idx]);};
+$("bSpeak").onclick=e=>{e.stopPropagation();if(queue[idx])speak(queue[idx]);};
+$("flipBtn").onclick=flip;$("okBtn").onclick=()=>mark("k");$("noBtn").onclick=()=>mark("u");
+$("nextBtn").onclick=()=>{if(idx<queue.length){idx++;showCard();}};
+$("prevBtn").onclick=()=>{if(idx>0){idx--;showCard();}};
+$("dirBtn").onclick=()=>{store.dir=store.dir==="en-de"?"de-en":"en-de";save();renderDir();restart();};
+$("onlyUnknown").onchange=e=>{store.only=e.target.checked;save();restart();};
+$("shuffle").onchange=e=>{store.shuffle=e.target.checked;save();restart();};
+$("search").oninput=renderList;
+$("qCheck").onclick=()=>checkQ(false);
+$("qSkip").onclick=()=>{if(quiz.answered)nextQ();else checkQ(true);};
+$("qIn").addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();checkQ(false);}});
+$("resetBtn").onclick=()=>{if(confirm("Gesamten Lernstand zurücksetzen? (Importierte Vokabeln bleiben erhalten)")){store.status={};save();restart();}};
+document.addEventListener("keydown",e=>{
+  if(tab!=="cards"||/INPUT|TEXTAREA/.test(e.target.tagName))return;
+  if(e.code==="Space"||e.key==="Enter"){e.preventDefault();flip();}
+  else if(e.key==="ArrowRight")mark("k");else if(e.key==="ArrowLeft")mark("u");
+});
+$("impFile").onchange=e=>{
+  const f=e.target.files[0];if(!f)return;
+  const r=new FileReader();r.onload=()=>{$("impText").value=r.result;msg("impMsg",`Datei „${f.name}“ geladen – jetzt auf „Importieren“ tippen.`);};r.readAsText(f,"utf-8");
+};
+$("impBtn").onclick=()=>{
+  const t=$("impText").value;
+  if(!t.trim()){msg("impMsg","Bitte zuerst Text einfügen oder eine Datei wählen.","err");return;}
+  const r=importText(t);
+  if(!r.added&&!r.updated){msg("impMsg",`Nichts importiert (${r.skipped} Zeilen übersprungen – Englisch und Deutsch sind Pflicht).`,"err");return;}
+  msg("impMsg",`✓ ${r.added} neu, ${r.updated} aktualisiert${r.skipped?`, ${r.skipped} übersprungen`:""}.`,"ok");$("impText").value="";
+};
+$("expDl").onclick=()=>{
+  try{const b=new Blob(["﻿"+toCsv()],{type:"text/csv;charset=utf-8"}),a=document.createElement("a");
+    a.href=URL.createObjectURL(b);a.download="vokabeln.csv";document.body.appendChild(a);a.click();a.remove();msg("expMsg","✓ vokabeln.csv erstellt.","ok");}
+  catch(e){msg("expMsg","Download nicht möglich – bitte „CSV kopieren“ nutzen.","err");}
+};
+$("expCopy").onclick=async()=>{
+  try{await navigator.clipboard.writeText(toCsv());msg("expMsg","✓ In die Zwischenablage kopiert.","ok");}
+  catch(e){$("impText").value=toCsv();msg("expMsg","Kopieren gesperrt – CSV steht oben im Textfeld, bitte manuell kopieren.","err");}
+};
+$("delCustom").onclick=()=>{
+  if(!custom.length){msg("expMsg","Keine importierten Vokabeln vorhanden.");return;}
+  if(confirm(`${custom.length} importierte Vokabeln löschen?`)){
+    custom=[];saveCustom();rebuild();store.units=null;store.heads=null;sanitizeSel();save();renderChips();restart();msg("expMsg","Importierte Vokabeln gelöscht.","ok");
+  }
+};
+
+/* ---------- Start ---------- */
+$("onlyUnknown").checked=store.only;$("shuffle").checked=store.shuffle;renderHud();
+renderChips();renderDir();restart();
+</script>
+</body>
+</html>
