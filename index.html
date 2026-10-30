@@ -2,6 +2,7 @@
 <html lang="de">
 <head>
 <meta charset="UTF-8">
+<meta name="referrer" content="no-referrer">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Vokabel-Arena</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -290,17 +291,33 @@ function confetti(){
 
 /* ---------- Audio ---------- */
 function ttsText(t){return t.replace(/\(.*?\)/g,"").replace(/↔.*/,"").replace(/[…]/g,"").replace(/\s+/g," ").trim();}
-function ttsUrl(t){return "https://translate.google.com/translate_tts?ie=UTF-8&client=tw-ob&tl=en-GB&q="+encodeURIComponent(ttsText(t));}
+function ttsUrl(t,host){return "https://"+(host||"translate.google.com")+"/translate_tts?ie=UTF-8&client=tw-ob&tl=en-GB&q="+encodeURIComponent(ttsText(t));}
 const audioOf=c=>c.audio||ttsUrl(c.en);
-let curAudio=null;
-function fallbackSpeak(t){try{if(!("speechSynthesis" in window))return;const u=new SpeechSynthesisUtterance(ttsText(t));u.lang="en-GB";u.rate=.9;speechSynthesis.cancel();speechSynthesis.speak(u);}catch(e){}}
-function speak(c){
+let curAudio=null,voices=[];
+function loadVoices(){try{voices=speechSynthesis.getVoices()||[];}catch(e){}}
+try{loadVoices();speechSynthesis.onvoiceschanged=loadVoices;}catch(e){}
+function fallbackSpeak(t){
   try{
-    if(curAudio) curAudio.pause();
-    const a=new Audio(audioOf(c));curAudio=a;
-    a.onerror=()=>fallbackSpeak(c.en);
-    const pr=a.play(); if(pr&&pr.catch) pr.catch(()=>fallbackSpeak(c.en));
-  }catch(e){fallbackSpeak(c.en);}
+    if(!("speechSynthesis" in window)){pop("🔇 Kein Audio");return;}
+    const u=new SpeechSynthesisUtterance(ttsText(t));
+    const v=voices.find(x=>x.lang==="en-GB")||voices.find(x=>/^en/i.test(x.lang));
+    if(v){u.voice=v;u.lang=v.lang;}else u.lang="en-GB";
+    u.rate=.9;speechSynthesis.cancel();speechSynthesis.speak(u);
+  }catch(e){pop("🔇 Kein Audio");}
+}
+function speak(c){
+  const urls=c.audio?[c.audio]:[ttsUrl(c.en),ttsUrl(c.en,"translate.googleapis.com")];
+  let i=0;
+  const next=()=>{
+    if(i>=urls.length){fallbackSpeak(c.en);return;}
+    try{
+      if(curAudio)curAudio.pause();
+      const a=new Audio();a.referrerPolicy="no-referrer";curAudio=a;
+      a.onerror=next;a.src=urls[i++];
+      const pr=a.play();if(pr&&pr.catch)pr.catch(next);
+    }catch(e){next();}
+  };
+  next();
 }
 function updateStats(){
   const k=CARDS.filter(c=>store.status[c.id]==="k").length;
